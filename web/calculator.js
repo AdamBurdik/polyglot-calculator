@@ -39,7 +39,22 @@ document.querySelectorAll("button").forEach(function (btn) {
         if (label === "AC") {
             currentInput = "";
         } else if (label === "=") {
-            
+            const expr = currentInput.replace(/×/g, "*").replace(/÷/g, "/");
+            fetch('/api/calc', { method: 'POST', body: expr })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.error) {
+                        currentInput = data.error;
+                    } else {
+                        currentInput = String(data.result);
+                    }
+                    render();
+                })
+                .catch(function (err) {
+                    currentInput = 'error';
+                    render();
+                });
+            return;
         } else {
             currentInput += label;
         }

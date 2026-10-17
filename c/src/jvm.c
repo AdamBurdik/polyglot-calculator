@@ -1,4 +1,28 @@
 #include "jvm.h"
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+static const char *jvm_exe_dir(void) {
+  static char dir[PATH_MAX];
+  static int ready;
+  if (!ready) {
+    char path[PATH_MAX];
+    ssize_t n = readlink("/proc/self/exe", path, sizeof(path) - 1);
+    if (n > 0) {
+      char *slash;
+      path[n] = '\0';
+      slash = strrchr(path, '/');
+      if (slash) *slash = '\0';
+      snprintf(dir, sizeof(dir), "%s", path);
+    } else {
+      snprintf(dir, sizeof(dir), ".");
+    }
+    ready = 1;
+  }
+  return dir;
+}
 
 int cache_java_methods(JNIEnv *env) {
     jclass local_cls = (*env)->FindClass(env, "Main");
@@ -21,8 +45,10 @@ int init_jvm() {
   JNIEnv *env;
   JavaVMInitArgs vm_args;
   JavaVMOption options[1];
+  static char classpath[PATH_MAX + 32];
 
-  options[0].optionString = "-Djava.class.path=.";
+  snprintf(classpath, sizeof(classpath), "-Djava.class.path=%s", jvm_exe_dir());
+  options[0].optionString = classpath;
 
   vm_args.version = JNI_VERSION_10; // JNI version for Java 25
   vm_args.nOptions = 1;
@@ -36,7 +62,9 @@ int init_jvm() {
     return 1;
   }
 
-  cache_java_methods(env);
+  if (cache_java_methods(env) != 0) {
+    fprintf(stderr, "Warning: could not cache Java methods (classpath: %s)\n", classpath);
+  }
   return 0;
 }
 

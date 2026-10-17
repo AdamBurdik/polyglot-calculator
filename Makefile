@@ -16,7 +16,7 @@ java:
 web:
 	cp web/calculator.html dist/index.html
 	cp web/calculator.css dist/
-    cp web/calculator.js dist/
+	cp web/calculator.js dist/
 python:
 	mkdir -p dist/
 	cp python/find_order.py dist/

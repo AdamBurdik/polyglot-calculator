@@ -6,6 +6,9 @@ find_package(PkgConfig REQUIRED)
 find_package(Python3 COMPONENTS Development.Embed REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
+#neo: only i needed this because i dont have standalone jdk
+#include("${CMAKE_CURRENT_SOURCE_DIR}/jni.cmake")
+#---
 find_package(JNI REQUIRED)
 
 pkg_check_modules(MHD REQUIRED libmicrohttpd)
