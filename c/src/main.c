@@ -2,6 +2,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "http.h"
+#include "jvm.h"
 #include <errno.h>
 #include <limits.h>
 #include <math.h>
@@ -53,6 +54,11 @@ static void calc_fail(calc_ctx *ctx, const char *fmt, ...) {
   va_end(ap);
 }
 
+// JVM Globals
+JavaVM *g_jvm = NULL;
+jclass g_main_cls = NULL;
+jmethodID g_multiple_mid = NULL;
+
 int calc_register(const char *name, int arity, calc_op_fn fn) {
   size_t i;
   if (!name || !fn || arity < 1 || strlen(name) >= CALC_MAX_NAME) return -1;
@@ -72,6 +78,7 @@ static const struct calc_op *calc_find(const char *name) {
 }
 
 static int op_add(calc_ctx *ctx, const double *args, size_t argc, double *out) {
+  printf("Operation: Addition\n");
   (void) ctx;
   (void) argc;
   double result;
@@ -87,10 +94,23 @@ static int op_sub(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   return 0;
 }
 
+// adamix: multiple operation calling java method
 static int op_mul(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   (void) ctx;
   (void) argc;
-  *out = args[0] * args[1]; //neo: swap out for a language call
+
+  JNIEnv *env = get_current_env();
+
+  if (g_main_cls == NULL || g_multiple_mid == NULL) {
+    fprintf(stderr, "Error: JNI classes or methods not cached yet!\n");
+    return 1;
+  }
+
+  jdouble result = (*env)->CallStaticDoubleMethod(env, g_main_cls, g_multiple_mid, args[0], args[1]);
+
+  double c = (double) result;
+
+  *out = c;
   return 0;
 }
 
@@ -465,6 +485,7 @@ int calc_calculate(const char *expr, double *out, char *err, size_t errlen) {
 }
 
 int main(int argc, char **argv) {
+  init_jvm();
   calc_init();
   if (argc > 1) {
     double out = 0.0;

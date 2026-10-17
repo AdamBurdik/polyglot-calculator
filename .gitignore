@@ -1,1 +1,4 @@
 /raygui
+c/build/
+dist/
+java/Main.class
