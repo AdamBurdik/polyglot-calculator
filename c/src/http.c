@@ -185,7 +185,7 @@ static void request_completed(void *cls, struct MHD_Connection *connection, void
 
 int http_main(void) {
   struct MHD_Daemon *d;
-  d = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION, 8080, NULL, NULL, &ahc_echo, NULL, MHD_OPTION_NOTIFY_COMPLETED, &request_completed, MHD_OPTION_END);
+  d = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD | MHD_USE_THREAD_PER_CONNECTION, 8080, NULL, NULL, &ahc_echo, NULL, MHD_OPTION_NOTIFY_COMPLETED, &request_completed, NULL, MHD_OPTION_END);
   if (NULL == d) return 1;
   raygui_main(); //neo: keep MHD running and start raygui.c
   MHD_stop_daemon(d);
