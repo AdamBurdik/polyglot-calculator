@@ -1,25 +1,14 @@
-#include "raylib.h"
+#include "raygui.h"
 #include <string.h>
-#define ROWS 5
-#define COLLUMBS 4
 char buffer[20] = "\0";
-struct button {
-    const int width;
-    const int height;
-    Color color;
-    char content[9]; 
-    const int posX;
-    const int posY;
-};
-
-int main(void) {
+int raygui_main(void) {
     const int sW = 600;
     const int sH = 800;
-    const int startY = 224; 
-    const int btnW = 150;   
-    const int btnH = 115;   
-    Color btn = (Color){ 255, 255, 255, 255 }; 
-    Color btnclick = (Color){ 74, 91, 214, 255 };   
+    const int startY = 224;
+    const int btnW = 150;
+    const int btnH = 115;
+    Color btn = (Color){ 255, 255, 255, 255 };
+    Color btnclick = (Color){ 74, 91, 214, 255 };
 
     struct button calcButtons[ROWS * COLLUMBS] = {
         // row 0
@@ -45,7 +34,7 @@ int main(void) {
         // row 4
         { btnW,btnH,btn,"0",0,startY + (4 * btnH) },
         { btnW,btnH,btn,".",btnW,startY + (4 * btnH) },
-        { btnW,btnH,btnclick,"=",2 * btnW,startY + (4 * btnH) }, 
+        { btnW,btnH,btnclick,"=",2 * btnW,startY + (4 * btnH) },
         { btnW,btnH,btn,"+",3 * btnW,startY + (4 * btnH) }
     };
     InitWindow(sW, sH, "weird almagation");
@@ -62,10 +51,10 @@ int main(void) {
 
                 for (int i = 0; i < ROWS * COLLUMBS; i++) {
                     DrawRectangle(
-                    calcButtons[i].posX + 1, 
-                    calcButtons[i].posY + 1, 
-                    calcButtons[i].width - 2, 
-                    calcButtons[i].height - 2, 
+                    calcButtons[i].posX + 1,
+                    calcButtons[i].posY + 1,
+                    calcButtons[i].width - 2,
+                    calcButtons[i].height - 2,
                     calcButtons[i].color
                 );
                 int fontSize = 30;
@@ -80,4 +69,3 @@ int main(void) {
     CloseWindow();
     return 0;
 }
-
