@@ -26,7 +26,7 @@ static const struct file_entry files[] = {
   {"/", "index.html", "text/html; charset=utf-8"},
   {"/index.html", "index.html", "text/html; charset=utf-8"},
   {"/calculator.css", "calculator.css", "text/css; charset=utf-8"},
-  {"/script.js", "script.js", "text/javascript; charset=utf-8"},
+  {"/calculator.js", "calculator.js", "text/javascript; charset=utf-8"},
 };
 
 static const char *api_arg(struct MHD_Connection *connection, const char *key) {
