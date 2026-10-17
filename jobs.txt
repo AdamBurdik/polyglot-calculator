@@ -1,5 +1,5 @@
 C gets Raylib frontend + http backend. (//neo: done)
-Assembly gets addition
+Assembly gets addition (//neo: done)
 D gets multiplication
 C++ gets advanced calculations like matrices (using neoapps-dev/Uranium)
 Python gets order of operations parsing (//neo: done)

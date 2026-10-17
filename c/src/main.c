@@ -74,7 +74,9 @@ static const struct calc_op *calc_find(const char *name) {
 static int op_add(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   (void) ctx;
   (void) argc;
-  *out = args[0] + args[1]; //neo: swap out for a language call
+  double result;
+  __asm__("vaddsd %1, %2, %0" : "=x"(result) : "x"(args[0]), "x"(args[1])); //neo: yum, assembly.
+  *out = result;
   return 0;
 }
 
