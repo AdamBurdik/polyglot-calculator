@@ -2,6 +2,7 @@
 #include "raygui.h"
 #include <limits.h>
 #include <unistd.h>
+int calc_calculate(const char *expr, double *out, char *err, size_t errlen);
 struct conn_state {
   char *body;
   size_t len;
@@ -33,17 +34,28 @@ static const char *api_arg(struct MHD_Connection *connection, const char *key) {
   return value ? value : "";
 }
 
-static int api_ping(struct MHD_Connection *connection, const char *body, size_t body_len, char **out, size_t *out_len) {
+static int api_calc(struct MHD_Connection *connection, const char *body, size_t body_len, char **out, size_t *out_len) {
+  const char *expr = body ? body : "";
+  char err[256];
+  char result[320];
+  double value = 0.0;
   (void) connection;
-  (void) body;
   (void) body_len;
-  *out = strdup("{\"pong\":true}");
+  err[0] = '\0';
+  if (calc_calculate(expr, &value, err, sizeof(err)) != 0) {
+    snprintf(result, sizeof(result), "{\"error\":\"%s\"}", err[0] ? err : "calculation failed");
+    *out = strdup(result);
+    *out_len = strlen(*out);
+    return MHD_HTTP_BAD_REQUEST;
+  }
+  snprintf(result, sizeof(result), "{\"result\":%.12g}", value);
+  *out = strdup(result);
   *out_len = strlen(*out);
   return MHD_HTTP_OK;
 }
 
 static const struct api_entry api_routes[] = {
-  {"/api/ping", "application/json; charset=utf-8", api_ping},
+  {"/api/calc", "application/json; charset=utf-8", api_calc},
 };
 
 static const char *exe_dir(void) {
