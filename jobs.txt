@@ -1,4 +1,8 @@
 C gets Raylib frontend + http backend.
-asm gets addition 
+Assembly gets addition 
 D gets multiplication
-list next.
+C++ gets advanced calculations like matrices (using neoapps-dev/Uranium)
+Python gets order of operations parsing
+Lua undecided yet
+Java, Kotlin, Scala and Groovy are undecided yet
+HTML/CSS/JS for the Web frontend
