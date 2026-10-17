@@ -1,3 +1,23 @@
+:root[data-theme="dark"]{
+    --bgcolor1:black;
+    --bgcolor: rgb(36, 36, 36) ;
+    --color: rgb(221, 219, 219);
+    --bcolor:  #2a2a2a;               
+    --equal:   #6b7bff;               
+    --hover:   #3a3a3a;             
+    --hoverb:  #4a4a4a;  
+    --bgequal:rgb(252, 248, 248);
+}
+:root{
+    --bgcolor1:white;
+    --color:black;
+    --bgcolor:white;
+    --bcolor:#f0e9e9;
+    --equal:#434FCF;
+    --hover:#cecdcd;
+    --hoverb:#cecdcd;
+    --bgequal:rgb(252, 248, 248);
+}
 *{
     box-sizing:border-box;
     padding:0px;
@@ -8,27 +28,35 @@ body{
     justify-content:center;
     align-items:center;
     margin:auto;
+    background-color: var(--bgcolor1);
 }
 #calculator{
-    background-color: white;
-    margin:auto;
+    background-color: var(--bgcolor);
+    margin: 10% auto;
     width:80%;
     max-width:450px;
     height:auto;
     max-height:600px;
-    display:flex;
-    align-items:center;
+    
 }
 
 #display{
     width:100%;
     height:auto;
-    min-height:75px;
-    background-color:#f2f2f3;
+    min-height:90px;
+    background-color: var(--bcolor);
+    font-size: 2.5rem;       
+    text-align: right;       
+    padding: 10px 15px;     
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
 }
+
+
 button, #display{
-    border:1px solid #f2f2f3;
-    color:black;
+    border:1px solid var(--bcolor);
+    color: var(--color);
     text-align:center;
     border-radius:5px;
 }
@@ -40,18 +68,22 @@ button{
     max-height:calc(600px / 5);
     cursor:pointer;
     transition:all 0.35s;
-    background-color:white;
+    background-color: var(--bgcolor);
 }
 .darker{
-    background-color:#f2f2f3;
+    background-color:var(--bcolor);
 }
 .equals{
-    background-color:#434FCF ;
-    color:white;
+    background-color:var(--equal) ;
+    color:var(--bgequal);
+}
+.equals:hover{
+    background-color: #5560e0;   /* or a var(--equal-hover) */
+    
 }
 button:hover{
-    background-color:#cecdcd;
-    border:1px solid #cecdcd;
+    background-color:var(--hover);
+    border:1px solid var(--hoverb);
 }
 .buttons{
     width:100%;
@@ -61,6 +93,22 @@ button:hover{
     gap:5px;
     margin:5px 0;
     height:auto;
+}
+.bi-moon{
+    border: 1px solid var(--color);
+    margin:20px;
+    padding:5px;
+    background-color: rgb(51, 51, 51);
+    color:rgb(214, 214, 214);
+    height:50px;
+    width:50px;
+    border-radius: 50%;
+    align-self: flex-start;
+    cursor:pointer;
+    transition:all 0.35s;
+}
+.bi-moon:hover{
+    transform:scale(1.1);
 }
 
 
