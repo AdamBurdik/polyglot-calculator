@@ -1,7 +1,7 @@
 #neo: this makefile is used to compile all the parts together, each part has its own buildsystem (e.g. c has cmake)
 #neo: output is in dist/
-.PHONY: c web python java
-all: c web python java
+.PHONY: c web python java lua
+all: c web python java lua
 clean:
 	rm -rf */build
 	rm -rf dist/*
@@ -20,3 +20,6 @@ web:
 python:
 	mkdir -p dist/
 	cp python/find_order.py dist/
+lua:
+	mkdir -p dist/
+	cp lua/pow.lua dist/

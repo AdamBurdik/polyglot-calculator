@@ -3,6 +3,9 @@
 #include <Python.h>
 #include "http.h"
 #include "jvm.h"
+#include <lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
 #include <errno.h>
 #include <limits.h>
 #include <math.h>
@@ -47,11 +50,73 @@ static size_t calc_op_count;
 static pthread_mutex_t calc_py_lock = PTHREAD_MUTEX_INITIALIZER;
 static PyObject *calc_py_find_order = NULL;
 static int calc_py_state = 0;
+static pthread_mutex_t calc_lua_lock = PTHREAD_MUTEX_INITIALIZER;
+static lua_State *calc_lua = NULL;
+static int calc_lua_fn = LUA_NOREF;
+static int calc_lua_state = 0;
+static const char *calc_exe_dir(void);
 static void calc_fail(calc_ctx *ctx, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   vsnprintf(ctx->err, sizeof(ctx->err), fmt, ap);
   va_end(ap);
+}
+
+static int calc_lua_load_error(char *err, size_t errlen) {
+  const char *msg = lua_tostring(calc_lua, -1);
+  snprintf(err, errlen, "%s", msg ? msg : "lua error");
+  lua_pop(calc_lua, 1);
+  calc_lua_state = -1;
+  return -1;
+}
+
+static int calc_find_lua_script(char *out, size_t cap) {
+  const char *candidates[] = {"pow.lua", "../lua/pow.lua"};
+  char path[PATH_MAX];
+  size_t i;
+  for (i = 0; i < sizeof(candidates) / sizeof(candidates[0]); i++) {
+    snprintf(path, sizeof(path), "%s/%s", calc_exe_dir(), candidates[i]);
+    if (access(path, R_OK) == 0) {
+      snprintf(out, cap, "%s", path);
+      return 1;
+    }
+  }
+  if (access("lua/pow.lua", R_OK) == 0) {
+    snprintf(out, cap, "%s", "lua/pow.lua");
+    return 1;
+  }
+  if (access("pow.lua", R_OK) == 0) {
+    snprintf(out, cap, "%s", "pow.lua");
+    return 1;
+  }
+  return 0;
+}
+
+static int calc_lua_init(char *err, size_t errlen) {
+  char script[PATH_MAX];
+  if (calc_lua_state) return calc_lua_state == 1 ? 0 : -1;
+  if (!calc_find_lua_script(script, sizeof(script))) {
+    snprintf(err, errlen, "pow.lua not found");
+    calc_lua_state = -1;
+    return -1;
+  }
+  calc_lua = luaL_newstate();
+  if (!calc_lua) {
+    snprintf(err, errlen, "could not create lua state");
+    calc_lua_state = -1;
+    return -1;
+  }
+  luaL_openlibs(calc_lua);
+  if (luaL_dofile(calc_lua, script) != LUA_OK) return calc_lua_load_error(err, errlen);
+  if (!lua_isfunction(calc_lua, -1)) {
+    snprintf(err, errlen, "pow.lua must return a function");
+    lua_pop(calc_lua, 1);
+    calc_lua_state = -1;
+    return -1;
+  }
+  calc_lua_fn = luaL_ref(calc_lua, LUA_REGISTRYINDEX);
+  calc_lua_state = 1;
+  return 0;
 }
 
 // JVM Globals
@@ -125,19 +190,43 @@ static int op_mul(calc_ctx *ctx, const double *args, size_t argc, double *out) {
 } */
 // D division.
 extern int op_div_d(calc_ctx *ctx, const double *args, size_t argc, double *out);
-static int op_div(calc_ctx *ctx, const double *args, size_t argc, double *out) { 
+static int op_div(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   int status = op_div_d(ctx, args, argc, out);
   if (status != 0) {
-    calc_fail(ctx, "Ah ah ah! no dividing by 0."); 
+    calc_fail(ctx, "Ah ah ah! no dividing by 0.");
     return -1;
   }
   return 0;
 }
 // end of D division
-static int op_pow(calc_ctx *ctx, const double *args, size_t argc, double *out) {
-  (void) ctx;
+static int op_pow(calc_ctx *ctx, const double *args, size_t argc, double *out) { //neo: lua
+  char err[CALC_ERR];
   (void) argc;
-  *out = pow(args[0], args[1]); //neo: swap out for a language call
+  err[0] = '\0';
+  pthread_mutex_lock(&calc_lua_lock);
+  if (calc_lua_init(err, sizeof(err)) != 0) {
+    pthread_mutex_unlock(&calc_lua_lock);
+    calc_fail(ctx, "%s", err[0] ? err : "lua unavailable");
+    return -1;
+  }
+  lua_rawgeti(calc_lua, LUA_REGISTRYINDEX, calc_lua_fn);
+  lua_pushnumber(calc_lua, (lua_Number) args[0]);
+  lua_pushnumber(calc_lua, (lua_Number) args[1]);
+  if (lua_pcall(calc_lua, 2, 1, 0) != LUA_OK) {
+    calc_lua_load_error(err, sizeof(err));
+    pthread_mutex_unlock(&calc_lua_lock);
+    calc_fail(ctx, "%s", err);
+    return -1;
+  }
+  if (!lua_isnumber(calc_lua, -1)) {
+    lua_pop(calc_lua, 1);
+    pthread_mutex_unlock(&calc_lua_lock);
+    calc_fail(ctx, "pow did not return a number"); //neo: whyyyyyy :sob:
+    return -1;
+  }
+  *out = (double) lua_tonumber(calc_lua, -1);
+  lua_pop(calc_lua, 1);
+  pthread_mutex_unlock(&calc_lua_lock);
   return 0;
 }
 

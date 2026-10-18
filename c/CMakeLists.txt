@@ -4,6 +4,7 @@ set(CMAKE_C_STANDARD 99)
 find_package(raylib REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(Python3 COMPONENTS Development.Embed REQUIRED)
+find_package(Lua 5.4 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 #neo: only i needed this because i dont have standalone jdk
@@ -20,6 +21,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${PROJECT_INCLUDE}
     ${Python3_INCLUDE_DIRS}
     ${MHD_INCLUDE_DIRS}
+    ${LUA_INCLUDE_DIR}
     ${JNI_INCLUDE_DIRS}
 )
 target_link_libraries(polyglotcalc PRIVATE
@@ -28,6 +30,7 @@ target_link_libraries(polyglotcalc PRIVATE
     m
     Threads::Threads
     Python3::Python
+    ${LUA_LIBRARIES}
     ${JNI_LIBRARIES}
 )
 # amibeingwatched: pretty sure this is valid idk lemme put the .o file in src
