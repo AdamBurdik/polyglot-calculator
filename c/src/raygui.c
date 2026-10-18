@@ -27,7 +27,6 @@ static void build_expr(const char *src, char *dst, size_t cap) {
     }
     dst[j] = '\0';
 }
-
 static void evaluate(void) {
     char expr[128];
     char err[256];
@@ -43,7 +42,6 @@ static void evaluate(void) {
     }
     fresh = 1;
 }
-
 static void press(const char *label) {
     size_t len;
     size_t add;
@@ -74,7 +72,6 @@ static void press(const char *label) {
         memcpy(buffer + len, label, add + 1);
     }
 }
-
 static void backspace(void) {
     size_t len = strlen(buffer);
     if (len == 0) return;
@@ -83,7 +80,6 @@ static void backspace(void) {
     buffer[len] = '\0';
     fresh = 0;
 }
-
 static void handle_keys(void) {
     int key;
     char text[2];
@@ -107,7 +103,6 @@ static void handle_keys(void) {
     if (IsKeyPressed(KEY_DELETE)) press("AC");
     if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER)) press("=");
 }
-
 static void handle_mouse(const struct button *buttons) {
     Vector2 mouse;
     int i;
@@ -126,7 +121,6 @@ static void handle_mouse(const struct button *buttons) {
         }
     }
 }
-
 int raygui_main(void) {
     const int sW = 600;
     const int sH = 800;
@@ -159,44 +153,67 @@ int raygui_main(void) {
         { btnW,btnH,btnclick,"=",2 * btnW,startY + (4 * btnH) },
         { btnW,btnH,btn,"+",3 * btnW,startY + (4 * btnH) }
     };
-    InitWindow(sW, sH, "weird almagation");
+    InitWindow(sW, sH, "Polyglot Calculator!"); // had to change the name lol
     SetTargetFPS(60);
     while (!WindowShouldClose()) {
         Vector2 mouse = GetMousePosition();
         int i;
         handle_keys();
         handle_mouse(calcButtons);
-        BeginDrawing();
-        ClearBackground(DARKGRAY);
-        DrawRectangle(10, 10, sW - 20, startY - 20, RAYWHITE);
-        DrawText(buffer, 25, startY - 60, 40, BLACK);
+               BeginDrawing();
+               ClearBackground(DARKGRAY); 
+        Rectangle displayRect = { 10, 10, (float)sW - 20, (float)startY - 20 };
+        DrawRectangleRounded(displayRect, 0.05f, 4, (Color){ 241, 243, 244, 255 });
+        DrawText(buffer, 30, startY - 70, 40, (Color){ 32, 33, 36, 255 });
         if (status[0] != '\0') {
-            int statusWidth = MeasureText(status, 24);
-            DrawText(status, sW - 25 - statusWidth, 30, 24, GRAY);
+            int statusWidth = MeasureText(status, 32);
+            DrawText(status, sW - 40 - statusWidth, 40, 32, (Color){ 32, 33, 36, 255 });
         }
-
-        for (i = 0; i < ROWS * COLLUMBS; i++) {
+            for (i = 0; i < ROWS * COLLUMBS; i++) {
+            int fontSize = 32;
+            int textWidth, textX, textY;
             Rectangle rect = {
-                (float) (calcButtons[i].posX + 1),
-                (float) (calcButtons[i].posY + 1),
-                (float) (calcButtons[i].width - 2),
-                (float) (calcButtons[i].height - 2)
+                (float) (calcButtons[i].posX + 4),
+                (float) (calcButtons[i].posY + 4),
+                (float) (calcButtons[i].width - 8),
+                (float) (calcButtons[i].height - 8)
             };
-            Color color = calcButtons[i].color;
-            int fontSize = 30;
-            int textWidth;
-            int textX;
-            int textY;
-            Color textColor;
-            if (CheckCollisionPointRec(mouse, rect)) {
-                color = IsMouseButtonDown(MOUSE_BUTTON_LEFT) ? btnpress : btnhover;
+            const char* token = calcButtons[i].content;
+            Color baseColor = WHITE;
+            Color textColor = (Color){ 60, 64, 67, 255 };
+            int drawBorder = 1;
+            if (strcmp(token, "=") == 0) {
+                baseColor = (Color){ 66, 133, 244, 255 };
+                textColor = WHITE;
+                drawBorder = 0;
+            } else if (strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || 
+                       strcmp(token, "×") == 0 || strcmp(token, "÷") == 0 || 
+                       strcmp(token, "AC") == 0 || strcmp(token, "%") == 0 ||
+                       strcmp(token, "(") == 0 || strcmp(token, ")") == 0) {
+                baseColor = (Color){ 241, 243, 244, 255 };
+                drawBorder = 0;
             }
-            DrawRectangle((int) rect.x, (int) rect.y, (int) rect.width, (int) rect.height, color);
-            textWidth = MeasureText(calcButtons[i].content, fontSize);
-            textX = calcButtons[i].posX + (calcButtons[i].width / 2) - (textWidth / 2);
-            textY = calcButtons[i].posY + (calcButtons[i].height / 2) - (fontSize / 2);
-            textColor = (color.r > 200) ? BLACK : WHITE;
-            DrawText(calcButtons[i].content, textX, textY, fontSize, textColor);
+            if (CheckCollisionPointRec(mouse, rect)) {
+                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+                    baseColor = (Color){ (unsigned char)(baseColor.r * 0.9f), (unsigned char)(baseColor.g * 0.9f), (unsigned char)(baseColor.b * 0.9f), 255 };
+                } else {
+                    baseColor = (Color){ 
+                        (unsigned char)(baseColor.r >= 245 ? 255 : baseColor.r + 10), 
+                        (unsigned char)(baseColor.g >= 245 ? 255 : baseColor.g + 10), 
+                        (unsigned char)(baseColor.b >= 245 ? 255 : baseColor.b + 10), 
+                        255 
+                    };
+                }
+            }
+            DrawRectangleRounded(rect, 0.08f, 4, baseColor);
+            if (drawBorder) {
+                DrawRectangleRoundedLines(rect, 0.08f, 4, (Color){ 218, 220, 224, 255 });
+            }
+            textWidth = MeasureText(token, fontSize);
+            textX = (int)rect.x + ((int)rect.width / 2) - (textWidth / 2);
+            textY = (int)rect.y + ((int)rect.height / 2) - (fontSize / 2);
+            
+            DrawText(token, textX, textY, fontSize, textColor);
         }
         EndDrawing();
     }
