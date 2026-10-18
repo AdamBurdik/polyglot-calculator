@@ -30,3 +30,12 @@ target_link_libraries(polyglotcalc PRIVATE
     Python3::Python
     ${JNI_LIBRARIES}
 )
+# amibeingwatched: pretty sure this is valid idk lemme put the .o file in src
+set(D_SOURCE "${CMAKE_CURRENT_LIST_DIR}/src/op_div.d")
+set(D_OBJECT "${CMAKE_CURRENT_BINARY_DIR}/op_div.o")
+add_custom_command(
+    OUTPUT ${D_OBJECT}
+    COMMAND dmd -betterC -c ${D_SOURCE} -of=${D_OBJECT}
+    DEPENDS ${D_SOURCE}
+)
+target_sources(${PROJECT_NAME} PRIVATE ${D_OBJECT})
