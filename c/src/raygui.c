@@ -1,11 +1,15 @@
 #include "raygui.h"
 #include <stdio.h>
 #include <string.h>
+
 int calc_calculate(const char *expr, double *out, char *err, size_t errlen);
 char buffer[20] = "\0";
+
 static char status[48] = "\0";
 static int fresh = 1;
 static int last_ok = 0;
+static int current_page = 0;
+
 static void build_expr(const char *src, char *dst, size_t cap) {
     size_t j = 0;
     while (*src != '\0' && j + 1 < cap) {
@@ -27,6 +31,7 @@ static void build_expr(const char *src, char *dst, size_t cap) {
     }
     dst[j] = '\0';
 }
+
 static void evaluate(void) {
     char expr[128];
     char err[256];
@@ -52,8 +57,42 @@ static void press(const char *label) {
         last_ok = 0;
         return;
     }
+	if (strcmp(label, "2nd") == 0) {
+		current_page = 1;
+		return;
+	}
+	if (strcmp(label, "1st") == 0) {
+		current_page = 0;
+		return;
+	}
     if (strcmp(label, "=") == 0) {
         evaluate();
+        return;
+    }
+    if (strcmp(label, "sqrt") == 0) {
+        size_t len = strlen(buffer);
+        size_t add = strlen(label);
+        if (len + add + 2 <= sizeof(buffer)) {
+            memcpy(buffer + len, label, add);
+            buffer[len + add] = '(';
+            buffer[len + add + 1] = '\0';
+        }
+        fresh = 0;
+        return;
+    }
+    if (
+    	strcmp(label, "sin") == 0 ||
+    	strcmp(label, "cos") == 0 ||
+    	strcmp(label, "tan") == 0
+   	) {
+        size_t len = strlen(buffer);
+        size_t add = strlen(label);
+        if (len + add + 2 <= sizeof(buffer)) {
+            memcpy(buffer + len, label, add);
+            buffer[len + add] = '(';
+            buffer[len + add + 1] = '\0';
+        }
+        fresh = 0;
         return;
     }
     if (fresh) {
@@ -121,6 +160,7 @@ static void handle_mouse(const struct button *buttons) {
         }
     }
 }
+
 int raygui_main(void) {
     const int sW = 600;
     const int sH = 800;
@@ -131,27 +171,52 @@ int raygui_main(void) {
     Color btnclick = (Color){ 74, 91, 214, 255 };
     Color btnhover = (Color){ 74, 91, 214, 255 };
     Color btnpress = (Color){ 45, 55, 140, 255 };
-    struct button calcButtons[ROWS * COLLUMBS] = {
-        { btnW,btnH,btn,"(",0,startY + (0 * btnH) },
-        { btnW,btnH,btn,")",btnW,startY + (0 * btnH) },
-        { btnW,btnH,btn,"%",2 * btnW,startY + (0 * btnH) },
-        { btnW,btnH,btn,"AC",3 * btnW,startY + (0 * btnH) },
-        { btnW,btnH,btn,"7",0,startY + (1 * btnH) },
-        { btnW,btnH,btn,"8",btnW,startY + (1 * btnH) },
-        { btnW,btnH,btn,"9",2 * btnW,startY + (1 * btnH) },
-        { btnW,btnH,btn,"÷",3 * btnW,startY + (1 * btnH) },
-        { btnW,btnH,btn,"4",0,startY + (2 * btnH) },
-        { btnW,btnH,btn,"5",btnW,startY + (2 * btnH) },
-        { btnW,btnH,btn,"6",2 * btnW,startY + (2 * btnH) },
-        { btnW,btnH,btn,"×",3 * btnW,startY + (2 * btnH) },
-        { btnW,btnH,btn,"1",0,startY + (3 * btnH) },
-        { btnW,btnH,btn,"2", btnW,startY + (3 * btnH) },
-        { btnW,btnH,btn,"3",2 * btnW,startY + (3 * btnH) },
-        { btnW,btnH,btn,"-",3 * btnW,startY + (3 * btnH) },
-        { btnW,btnH,btn,"0",0,startY + (4 * btnH) },
-        { btnW,btnH,btn,".",btnW,startY + (4 * btnH) },
-        { btnW,btnH,btnclick,"=",2 * btnW,startY + (4 * btnH) },
-        { btnW,btnH,btn,"+",3 * btnW,startY + (4 * btnH) }
+    
+    struct button calcButtons[2][ROWS * COLLUMBS] = {
+        {
+        	{ btnW,btnH,btn,"(",0,startY + (0 * btnH) },
+   	        { btnW,btnH,btn,")",btnW,startY + (0 * btnH) },
+   	        { btnW,btnH,btn,"2nd",2 * btnW,startY + (0 * btnH) },
+   	        { btnW,btnH,btn,"AC",3 * btnW,startY + (0 * btnH) },
+   	        { btnW,btnH,btn,"7",0,startY + (1 * btnH) },
+   	        { btnW,btnH,btn,"8",btnW,startY + (1 * btnH) },
+   	        { btnW,btnH,btn,"9",2 * btnW,startY + (1 * btnH) },
+   	        { btnW,btnH,btn,"÷",3 * btnW,startY + (1 * btnH) },
+   	        { btnW,btnH,btn,"4",0,startY + (2 * btnH) },
+   	        { btnW,btnH,btn,"5",btnW,startY + (2 * btnH) },
+   	        { btnW,btnH,btn,"6",2 * btnW,startY + (2 * btnH) },
+   	        { btnW,btnH,btn,"×",3 * btnW,startY + (2 * btnH) },
+   	        { btnW,btnH,btn,"1",0,startY + (3 * btnH) },
+   	        { btnW,btnH,btn,"2", btnW,startY + (3 * btnH) },
+   	        { btnW,btnH,btn,"3",2 * btnW,startY + (3 * btnH) },
+   	        { btnW,btnH,btn,"-",3 * btnW,startY + (3 * btnH) },
+   	        { btnW,btnH,btn,"0",0,startY + (4 * btnH) },
+   	        { btnW,btnH,btn,".",btnW,startY + (4 * btnH) },
+   	        { btnW,btnH,btnclick,"=",2 * btnW,startY + (4 * btnH) },
+   	        { btnW,btnH,btn,"+",3 * btnW,startY + (4 * btnH) }
+        },
+        {
+        	{ btnW,btnH,btn,"^",0,startY + (0 * btnH) },
+   	        { btnW,btnH,btn,"sqrt",btnW,startY + (0 * btnH) },
+   	        { btnW,btnH,btn,"1st",2 * btnW,startY + (0 * btnH) },
+   	        { btnW,btnH,btn,"AC",3 * btnW,startY + (0 * btnH) },
+   	        { btnW,btnH,btn,"7",0,startY + (1 * btnH) },
+   	        { btnW,btnH,btn,"8",btnW,startY + (1 * btnH) },
+   	        { btnW,btnH,btn,"9",2 * btnW,startY + (1 * btnH) },
+   	        { btnW,btnH,btn,"sin",3 * btnW,startY + (1 * btnH) },
+   	        { btnW,btnH,btn,"4",0,startY + (2 * btnH) },
+   	        { btnW,btnH,btn,"5",btnW,startY + (2 * btnH) },
+   	        { btnW,btnH,btn,"6",2 * btnW,startY + (2 * btnH) },
+   	        { btnW,btnH,btn,"cos",3 * btnW,startY + (2 * btnH) },
+   	        { btnW,btnH,btn,"1",0,startY + (3 * btnH) },
+   	        { btnW,btnH,btn,"2", btnW,startY + (3 * btnH) },
+   	        { btnW,btnH,btn,"3",2 * btnW,startY + (3 * btnH) },
+   	        { btnW,btnH,btn,"tan",3 * btnW,startY + (3 * btnH) },
+   	        { btnW,btnH,btn,"0",0,startY + (4 * btnH) },
+   	        { btnW,btnH,btn,".",btnW,startY + (4 * btnH) },
+   	        { btnW,btnH,btnclick,"=",2 * btnW,startY + (4 * btnH) },
+   	        { btnW,btnH,btn,"%",3 * btnW,startY + (4 * btnH) }
+        }
     };
     InitWindow(sW, sH, "Polyglot Calculator!"); // had to change the name lol
     SetTargetFPS(60);
@@ -159,26 +224,31 @@ int raygui_main(void) {
         Vector2 mouse = GetMousePosition();
         int i;
         handle_keys();
-        handle_mouse(calcButtons);
-               BeginDrawing();
-               ClearBackground(DARKGRAY); 
-        Rectangle displayRect = { 10, 10, (float)sW - 20, (float)startY - 20 };
-        DrawRectangleRounded(displayRect, 0.05f, 4, (Color){ 241, 243, 244, 255 });
-        DrawText(buffer, 30, startY - 70, 40, (Color){ 32, 33, 36, 255 });
-        if (status[0] != '\0') {
-            int statusWidth = MeasureText(status, 32);
-            DrawText(status, sW - 40 - statusWidth, 40, 32, (Color){ 32, 33, 36, 255 });
-        }
+        handle_mouse(calcButtons[current_page]);
+        
+        BeginDrawing();
+        	ClearBackground(DARKGRAY); 
+        	
+	        Rectangle displayRect = { 10, 10, (float)sW - 20, (float)startY - 20 };
+	        
+	        DrawRectangleRounded(displayRect, 0.05f, 4, (Color){ 241, 243, 244, 255 });
+	        
+	        DrawText(buffer, 30, startY - 70, 40, (Color){ 32, 33, 36, 255 });
+	        if (status[0] != '\0') {
+	            int statusWidth = MeasureText(status, 32);
+	            DrawText(status, sW - 40 - statusWidth, 40, 32, (Color){ 32, 33, 36, 255 });
+	        }
+	        
             for (i = 0; i < ROWS * COLLUMBS; i++) {
-            int fontSize = 32;
-            int textWidth, textX, textY;
-            Rectangle rect = {
-                (float) (calcButtons[i].posX + 4),
-                (float) (calcButtons[i].posY + 4),
-                (float) (calcButtons[i].width - 8),
-                (float) (calcButtons[i].height - 8)
+	            int fontSize = 32;
+	            int textWidth, textX, textY;
+	            Rectangle rect = {
+	                (float) (calcButtons[current_page][i].posX + 4),
+	                (float) (calcButtons[current_page][i].posY + 4),
+	                (float) (calcButtons[current_page][i].width - 8),
+	                (float) (calcButtons[current_page][i].height - 8)
             };
-            const char* token = calcButtons[i].content;
+            const char* token = calcButtons[current_page][i].content;
             Color baseColor = WHITE;
             Color textColor = (Color){ 60, 64, 67, 255 };
             int drawBorder = 1;
@@ -212,7 +282,7 @@ int raygui_main(void) {
             textWidth = MeasureText(token, fontSize);
             textX = (int)rect.x + ((int)rect.width / 2) - (textWidth / 2);
             textY = (int)rect.y + ((int)rect.height / 2) - (fontSize / 2);
-            
+	            
             DrawText(token, textX, textY, fontSize, textColor);
         }
         EndDrawing();

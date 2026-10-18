@@ -158,6 +158,27 @@ static int op_sqrt(calc_ctx *ctx, const double *args, size_t argc, double *out) 
   return 0;
 }
 
+static int op_sin(calc_ctx *ctx, const double *args, size_t argc, double *out) {
+  (void) ctx;
+  (void) argc;
+  *out = 20; //adamix: swap out for a language call
+  return 0;
+}
+
+static int op_cos(calc_ctx *ctx, const double *args, size_t argc, double *out) {
+  (void) ctx;
+  (void) argc;
+  *out = 21; //adamix: swap out for a language call
+  return 0;
+}
+
+static int op_tan(calc_ctx *ctx, const double *args, size_t argc, double *out) {
+  (void) ctx;
+  (void) argc;
+  *out = 22; //adamix: swap out for a language call
+  return 0;
+}
+
 static void calc_init(void) { //neo: maps each python-outptted operation to C functions
   calc_register("add", 2, op_add); //neo: calc_register("op_name", op_arity_or_number_of_numbers, C_function)
   calc_register("sub", 2, op_sub);
@@ -166,6 +187,9 @@ static void calc_init(void) { //neo: maps each python-outptted operation to C fu
   calc_register("pow", 2, op_pow);
   calc_register("neg", 1, op_neg);
   calc_register("sqrt", 1, op_sqrt);
+  calc_register("sin", 1, op_sin);
+  calc_register("cos", 1, op_cos);
+  calc_register("tan", 1, op_tan);
 }
 
 static const char *calc_exe_dir(void) {
