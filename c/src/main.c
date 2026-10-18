@@ -78,7 +78,6 @@ static const struct calc_op *calc_find(const char *name) {
 }
 
 static int op_add(calc_ctx *ctx, const double *args, size_t argc, double *out) {
-  printf("Operation: Addition\n");
   (void) ctx;
   (void) argc;
   double result;
