@@ -3,4 +3,3 @@ c/build/
 dist/
 java/Main.class
 c/jni.cmake
-c/src/op_div.o
