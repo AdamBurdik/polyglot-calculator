@@ -114,7 +114,7 @@ static int op_mul(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   return 0;
 }
 
-static int op_div(calc_ctx *ctx, const double *args, size_t argc, double *out) {
+/* static int op_div(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   (void) argc;
   if (args[1] == 0.0) {
     calc_fail(ctx, "division by zero");
@@ -122,8 +122,18 @@ static int op_div(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   }
   *out = args[0] / args[1]; //neo: swap out for a language call
   return 0;
+} */
+// D division.
+extern int op_div_d(calc_ctx *ctx, const double *args, size_t argc, double *out);
+static int op_div(calc_ctx *ctx, const double *args, size_t argc, double *out) { 
+  int status = op_div_d(ctx, args, argc, out);
+  if (status != 0) {
+    calc_fail(ctx, "Ah ah ah! no dividing by 0."); 
+    return -1;
+  }
+  return 0;
 }
-
+// end of D division
 static int op_pow(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   (void) ctx;
   (void) argc;
