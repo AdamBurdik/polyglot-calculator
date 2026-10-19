@@ -56,9 +56,9 @@ document.querySelectorAll("button").forEach(function (btn) {
                 });
             return;
         } else if (label === "π") {
-            currentInput += "pi()";
+            currentInput += "pi";
         } else if (label === "e") {
-            currentInput += "e()";
+            currentInput += "e";
         } else {
             currentInput += label;
         }

@@ -126,15 +126,6 @@ static void press(const char *label) {
     }
     len = strlen(buffer);
     add = strlen(label);
-    if (strcmp(label, "pi") == 0 || strcmp(label, "e") == 0) {
-        if (len + add + 3 <= sizeof(buffer)) {
-            memcpy(buffer + len, label, add);
-            buffer[len + add] = '(';
-            buffer[len + add + 1] = ')';
-            buffer[len + add + 2] = '\0';
-        }
-        return;
-    }
     if (len + add + 1 <= sizeof(buffer)) {
         memcpy(buffer + len, label, add + 1);
     }
