@@ -3,7 +3,7 @@
 #include <string.h>
 
 int calc_calculate(const char *expr, double *out, char *err, size_t errlen);
-char buffer[20] = "\0";
+char buffer[128] = "\0";
 
 static char status[48] = "\0";
 static int fresh = 1;
@@ -33,7 +33,7 @@ static void build_expr(const char *src, char *dst, size_t cap) {
 }
 
 static void evaluate(void) {
-    char expr[128];
+    char expr[512];
     char err[256];
     double out = 0.0;
     build_expr(buffer, expr, sizeof(expr));
@@ -95,6 +95,24 @@ static void press(const char *label) {
         fresh = 0;
         return;
     }
+    if (
+    	strcmp(label, "det2") == 0 ||
+    	strcmp(label, "det3") == 0 ||
+    	strcmp(label, "tr2") == 0 ||
+    	strcmp(label, "tr3") == 0 ||
+    	strcmp(label, "frob2") == 0 ||
+    	strcmp(label, "frob3") == 0
+   	) {
+        size_t len = strlen(buffer);
+        size_t add = strlen(label);
+        if (len + add + 2 <= sizeof(buffer)) {
+            memcpy(buffer + len, label, add);
+            buffer[len + add] = '(';
+            buffer[len + add + 1] = '\0';
+        }
+        fresh = 0;
+        return;
+    }
     if (fresh) {
         if ((label[0] >= '0' && label[0] <= '9') || strcmp(label, ".") == 0 || strcmp(label, "(") == 0 ||
             strcmp(label, "pi") == 0 || strcmp(label, "e") == 0) {
@@ -136,7 +154,7 @@ static void handle_keys(void) {
     while ((key = GetCharPressed()) > 0) {
         if (key > 126 || key < 32) continue;
         text[0] = (char) key;
-        if ((key >= '0' && key <= '9') || key == '.' || key == '(' || key == ')' || key == '+' || key == '-') {
+        if ((key >= '0' && key <= '9') || key == '.' || key == '(' || key == ')' || key == '+' || key == '-' || key == ',') {
             press(text);
         } else if (key == '*') {
             press("×");
@@ -164,6 +182,7 @@ static void handle_mouse(const struct button *buttons) {
             (float) (buttons[i].width - 2),
             (float) (buttons[i].height - 2)
         };
+        if (buttons[i].content[0] == '\0') continue;
         if (CheckCollisionPointRec(mouse, rect)) {
             press(buttons[i].content);
             return;
@@ -176,7 +195,7 @@ int raygui_main(void) {
     const int sH = 800;
     const int startY = 224;
     const int btnW = 150;
-    const int btnH = 96;
+    const int btnH = 82;
     Color btn = (Color){ 255, 255, 255, 255 };
     Color btnclick = (Color){ 74, 91, 214, 255 };
     Color btnhover = (Color){ 74, 91, 214, 255 };
@@ -207,7 +226,11 @@ int raygui_main(void) {
    	        { btnW,btnH,btn,"pi",0,startY + (5 * btnH) },
    	        { btnW,btnH,btn,"e",btnW,startY + (5 * btnH) },
    	        { btnW,btnH,btn,"^",2 * btnW,startY + (5 * btnH) },
-   	        { btnW,btnH,btn,"%",3 * btnW,startY + (5 * btnH) }
+   	        { btnW,btnH,btn,"%",3 * btnW,startY + (5 * btnH) },
+   	        { btnW,btnH,btn,"det2",0,startY + (6 * btnH) },
+   	        { btnW,btnH,btn,"tr2",btnW,startY + (6 * btnH) },
+   	        { btnW,btnH,btn,"frob2",2 * btnW,startY + (6 * btnH) },
+   	        { btnW,btnH,btn,",",3 * btnW,startY + (6 * btnH) }
         },
         {
         	{ btnW,btnH,btn,"^",0,startY + (0 * btnH) },
@@ -233,7 +256,11 @@ int raygui_main(void) {
    	        { btnW,btnH,btn,"pi",0,startY + (5 * btnH) },
    	        { btnW,btnH,btn,"e",btnW,startY + (5 * btnH) },
    	        { btnW,btnH,btn,"(",2 * btnW,startY + (5 * btnH) },
-   	        { btnW,btnH,btn,")",3 * btnW,startY + (5 * btnH) }
+   	        { btnW,btnH,btn,")",3 * btnW,startY + (5 * btnH) },
+   	        { btnW,btnH,btn,"det3",0,startY + (6 * btnH) },
+   	        { btnW,btnH,btn,"tr3",btnW,startY + (6 * btnH) },
+   	        { btnW,btnH,btn,"frob3",2 * btnW,startY + (6 * btnH) },
+   	        { btnW,btnH,btn,",",3 * btnW,startY + (6 * btnH) }
         }
     };
     InitWindow(sW, sH, "Polyglot Calculator!"); // had to change the name lol
@@ -251,7 +278,15 @@ int raygui_main(void) {
 	        
 	        DrawRectangleRounded(displayRect, 0.05f, 4, (Color){ 241, 243, 244, 255 });
 	        
-	        DrawText(buffer, 30, startY - 70, 40, (Color){ 32, 33, 36, 255 });
+	        {
+	            int bufFont = 40;
+	            int bufWidth = MeasureText(buffer, bufFont);
+	            while (bufFont > 14 && bufWidth > sW - 60) {
+	                bufFont -= 4;
+	                bufWidth = MeasureText(buffer, bufFont);
+	            }
+	            DrawText(buffer, 30, startY - 70, bufFont, (Color){ 32, 33, 36, 255 });
+	        }
 	        if (status[0] != '\0') {
 	            int statusWidth = MeasureText(status, 32);
 	            DrawText(status, sW - 40 - statusWidth, 40, 32, (Color){ 32, 33, 36, 255 });
@@ -270,6 +305,7 @@ int raygui_main(void) {
             Color baseColor = WHITE;
             Color textColor = (Color){ 60, 64, 67, 255 };
             int drawBorder = 1;
+            if (token[0] == '\0') continue;
             if (strcmp(token, "=") == 0) {
                 baseColor = (Color){ 66, 133, 244, 255 };
                 textColor = WHITE;

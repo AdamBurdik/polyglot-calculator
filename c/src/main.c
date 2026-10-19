@@ -199,6 +199,12 @@ static int op_mul(calc_ctx *ctx, const double *args, size_t argc, double *out) {
 } */
 // D division.
 extern int op_div_d(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_det2(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_det3(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_tr2(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_tr3(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_frob2(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_frob3(calc_ctx *ctx, const double *args, size_t argc, double *out);
 static int op_div(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   int status = op_div_d(ctx, args, argc, out);
   if (status != 0) {
@@ -356,6 +362,14 @@ static void calc_init(void) { //neo: maps each python-outptted operation to C fu
   calc_register("tan", 1, op_tan);
   calc_register("e", 0, op_e);
   calc_register("pi", 0, op_pi);
+  //neo: matrix operations :yum:
+  calc_register("det2", 4, op_det2);
+  calc_register("det3", 9, op_det3);
+  calc_register("tr2", 4, op_tr2);
+  calc_register("tr3", 9, op_tr3);
+  calc_register("frob2", 4, op_frob2);
+  calc_register("frob3", 9, op_frob3);
+  //---
 }
 
 static const char *calc_exe_dir(void) {
