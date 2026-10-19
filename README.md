@@ -15,3 +15,13 @@ This project was made for hackaton, by our great team 1.
 - [Kotlin](kotlin/KotlinMain.kt)
 - [Groovy](groovy/GroovyMain.groovy) (`cos`)
 - [Scala](scala/ScalaMain.scala) (`tan`)
+- [HTML/CSS/JS](web) mostly by K
+
+## Frontends
+| Type | Languages | Screenshot | Extra Info |
+|---|---|---|---|
+| GUI | C | [TBF] | Made with Raylib |
+| Web | HTML/CSS/JS | [TBF] | Access on port :8080 after launching the Raylib GUI |
+
+## License
+You may use this code as you please, under the [0BSD License](LICENSE).

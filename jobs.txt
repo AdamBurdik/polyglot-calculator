@@ -8,4 +8,4 @@ Java (//adamix: done)
 Kotlin (//adamix: done)
 Groovy (//adamix: done)
 Scala (//adamix: done)
-HTML/CSS/JS for the Web frontend
+HTML/CSS/JS for the Web frontend (done by K)
