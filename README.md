@@ -9,3 +9,4 @@ Using as many programming languages as we can to make a calculator!
 - [Java](java/Main.java) (in [`./c/src/main.c`](c/src/main.c), `op_mul`)
 - [D](c/src/op_div.d)
 - [Lua](lua)
+- [Kotlin](kotlin/KotlinMain.kt)
