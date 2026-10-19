@@ -6,5 +6,6 @@ Python gets order of operations parsing (//neo: done)
 Lua gets exponents (powers) (//neo: done)
 Java (//adamix: done)
 Kotlin (//adamix: done)
-Scala and Groovy are undecided yet
+Groovy (//adamix: done)
+Scala (//adamix: done)
 HTML/CSS/JS for the Web frontend

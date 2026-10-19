@@ -25,46 +25,38 @@ static const char *jvm_exe_dir(void) {
 }
 
 
-int cache_all_methods(JNIEnv *env) {
-    // 1. Load Java class (Main.class)
-    jclass local_java = (*env)->FindClass(env, "Main");
-    if (local_java == NULL) {
-        fprintf(stderr, "Failed to find Java class 'Main'\n");
+static int cache_static_method(JNIEnv *env, const char *class_name, const char *method_name, const char *signature, jclass *out_cls, jmethodID *out_mid) {
+    jclass local_cls = (*env)->FindClass(env, class_name);
+    if (local_cls == NULL) {
+        fprintf(stderr, "Failed to find Java class '%s'\n", class_name);
         (*env)->ExceptionDescribe(env); // Prints exact JVM error to stderr
         (*env)->ExceptionClear(env);    // Clear the exception
         return 1;
     }
-    g_java_cls = (*env)->NewGlobalRef(env, local_java);
-    (*env)->DeleteLocalRef(env, local_java);
-    
-    g_java_mid = (*env)->GetStaticMethodID(env, g_java_cls, "multiple", "(DD)D");
-    if (g_java_mid == NULL) {
-        fprintf(stderr, "Failed to find method 'multiple'\n");
-        (*env)->ExceptionDescribe(env);
-        (*env)->ExceptionClear(env);
+    *out_cls = (*env)->NewGlobalRef(env, local_cls);
+    (*env)->DeleteLocalRef(env, local_cls);
+    if (*out_cls == NULL) {
+        fprintf(stderr, "Failed to cache Java class '%s'\n", class_name);
         return 1;
     }
 
-    // 2. Load Kotlin class (MainKt.class)
-    jclass local_kotlin = (*env)->FindClass(env, "KotlinMain");
-    if (local_kotlin == NULL) {
-        fprintf(stderr, "Failed to find Kotlin class 'KotlinMain'\n");
+    *out_mid = (*env)->GetStaticMethodID(env, *out_cls, method_name, signature);
+    if (*out_mid == NULL) {
+        fprintf(stderr, "Failed to find method '%s' in '%s'\n", method_name, class_name);
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
         return 1;
     }
-    g_kotlin_cls = (*env)->NewGlobalRef(env, local_kotlin);
-    (*env)->DeleteLocalRef(env, local_kotlin);
-    
-    g_kotlin_mid = (*env)->GetStaticMethodID(env, g_kotlin_cls, "sin", "(D)D");
-    if (g_kotlin_mid == NULL) {
-        fprintf(stderr, "Failed to find method 'sin' in MainKt\n");
-        (*env)->ExceptionDescribe(env);
-        (*env)->ExceptionClear(env);
-        return 1;
-    }
-
     return 0;
+}
+
+int cache_all_methods(JNIEnv *env) {
+    int rc = 0;
+    rc |= cache_static_method(env, "Main", "multiple", "(DD)D", &g_java_cls, &g_java_mid);
+    rc |= cache_static_method(env, "KotlinMain", "sin", "(D)D", &g_kotlin_cls, &g_kotlin_mid);
+    rc |= cache_static_method(env, "GroovyMain", "cos", "(D)D", &g_groovy_cls, &g_groovy_mid);
+    rc |= cache_static_method(env, "ScalaMain", "tan", "(D)D", &g_scala_cls, &g_scala_mid);
+    return rc;
 }
 
 int init_jvm() {
@@ -73,9 +65,9 @@ int init_jvm() {
   JNIEnv *env;
   JavaVMInitArgs vm_args;
   JavaVMOption options[1];
-  static char classpath[PATH_MAX + 32];
+  static char classpath[PATH_MAX * 4 + 64];
 
-  snprintf(classpath, sizeof(classpath), "-Djava.class.path=%s", jvm_exe_dir());
+  snprintf(classpath, sizeof(classpath), "-Djava.class.path=%s:%s/groovy.jar:%s/groovy-callsite.jar", jvm_exe_dir(), jvm_exe_dir(), jvm_exe_dir());
   options[0].optionString = classpath;
 
   vm_args.version = JNI_VERSION_10; // JNI version for Java 25

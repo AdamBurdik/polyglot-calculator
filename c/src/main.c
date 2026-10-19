@@ -128,6 +128,12 @@ jmethodID g_java_mid = NULL;
 jclass g_kotlin_cls = NULL;
 jmethodID g_kotlin_mid = NULL;
 
+jclass g_groovy_cls = NULL;
+jmethodID g_groovy_mid = NULL;
+
+jclass g_scala_cls = NULL;
+jmethodID g_scala_mid = NULL;
+
 
 int calc_register(const char *name, int arity, calc_op_fn fn) {
   size_t i;
@@ -274,14 +280,34 @@ static int op_sin(calc_ctx *ctx, const double *args, size_t argc, double *out) {
 static int op_cos(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   (void) ctx;
   (void) argc;
-  *out = 21; //adamix: swap out for a language call
+
+  JNIEnv *env = get_current_env();
+
+  if (g_groovy_cls == NULL || g_groovy_mid == NULL) {
+    fprintf(stderr, "Error: Groovy JNI classes or methods not cached yet!\n");
+    return 1;
+  }
+
+  jdouble result = (*env)->CallStaticDoubleMethod(env, g_groovy_cls, g_groovy_mid, args[0]);
+
+  *out = (double) result;
   return 0;
 }
 
 static int op_tan(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   (void) ctx;
   (void) argc;
-  *out = 22; //adamix: swap out for a language call
+
+  JNIEnv *env = get_current_env();
+
+  if (g_scala_cls == NULL || g_scala_mid == NULL) {
+    fprintf(stderr, "Error: Scala JNI classes or methods not cached yet!\n");
+    return 1;
+  }
+
+  jdouble result = (*env)->CallStaticDoubleMethod(env, g_scala_cls, g_scala_mid, args[0]);
+
+  *out = (double) result;
   return 0;
 }
 

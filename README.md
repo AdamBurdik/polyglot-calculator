@@ -10,3 +10,5 @@ Using as many programming languages as we can to make a calculator!
 - [D](c/src/op_div.d)
 - [Lua](lua)
 - [Kotlin](kotlin/KotlinMain.kt)
+- [Groovy](groovy/GroovyMain.groovy) (`cos`)
+- [Scala](scala/ScalaMain.scala) (`tan`)
