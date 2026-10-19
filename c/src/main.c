@@ -121,8 +121,13 @@ static int calc_lua_init(char *err, size_t errlen) {
 
 // JVM Globals
 JavaVM *g_jvm = NULL;
-jclass g_main_cls = NULL;
-jmethodID g_multiple_mid = NULL;
+
+jclass g_java_cls = NULL;
+jmethodID g_java_mid = NULL;
+
+jclass g_kotlin_cls = NULL;
+jmethodID g_kotlin_mid = NULL;
+
 
 int calc_register(const char *name, int arity, calc_op_fn fn) {
   size_t i;
@@ -166,12 +171,12 @@ static int op_mul(calc_ctx *ctx, const double *args, size_t argc, double *out) {
 
   JNIEnv *env = get_current_env();
 
-  if (g_main_cls == NULL || g_multiple_mid == NULL) {
-    fprintf(stderr, "Error: JNI classes or methods not cached yet!\n");
+  if (g_java_cls == NULL || g_java_mid == NULL) {
+    fprintf(stderr, "Error: Java JNI classes or methods not cached yet!\n");
     return 1;
   }
 
-  jdouble result = (*env)->CallStaticDoubleMethod(env, g_main_cls, g_multiple_mid, args[0], args[1]);
+  jdouble result = (*env)->CallStaticDoubleMethod(env, g_java_cls, g_java_mid, args[0], args[1]);
 
   double c = (double) result;
 
@@ -250,7 +255,19 @@ static int op_sqrt(calc_ctx *ctx, const double *args, size_t argc, double *out) 
 static int op_sin(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   (void) ctx;
   (void) argc;
-  *out = 20; //adamix: swap out for a language call
+
+  JNIEnv *env = get_current_env();
+
+  if (g_kotlin_cls == NULL || g_kotlin_mid == NULL) {
+    fprintf(stderr, "Error: Kotlin JNI classes or methods not cached yet!\n");
+    return 1;
+  }
+
+  jdouble result = (*env)->CallStaticDoubleMethod(env, g_kotlin_cls, g_kotlin_mid, args[0]);
+
+  double c = (double) result;
+
+  *out = c;
   return 0;
 }
 

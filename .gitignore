@@ -3,3 +3,4 @@ c/build/
 dist/
 java/Main.class
 c/jni.cmake
+kotlin/META-INF

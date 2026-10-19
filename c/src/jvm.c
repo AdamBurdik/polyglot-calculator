@@ -24,20 +24,48 @@ static const char *jvm_exe_dir(void) {
   return dir;
 }
 
-int cache_java_methods(JNIEnv *env) {
-    jclass local_cls = (*env)->FindClass(env, "Main");
-    if (local_cls == NULL) return 1;
 
-    g_main_cls = (*env)->NewGlobalRef(env, local_cls);
-    (*env)->DeleteLocalRef(env, local_cls); // Clean up local ref
-    if (g_main_cls == NULL) return 1;
+int cache_all_methods(JNIEnv *env) {
+    // 1. Load Java class (Main.class)
+    jclass local_java = (*env)->FindClass(env, "Main");
+    if (local_java == NULL) {
+        fprintf(stderr, "Failed to find Java class 'Main'\n");
+        (*env)->ExceptionDescribe(env); // Prints exact JVM error to stderr
+        (*env)->ExceptionClear(env);    // Clear the exception
+        return 1;
+    }
+    g_java_cls = (*env)->NewGlobalRef(env, local_java);
+    (*env)->DeleteLocalRef(env, local_java);
+    
+    g_java_mid = (*env)->GetStaticMethodID(env, g_java_cls, "multiple", "(DD)D");
+    if (g_java_mid == NULL) {
+        fprintf(stderr, "Failed to find method 'multiple'\n");
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        return 1;
+    }
 
-    g_multiple_mid = (*env)->GetStaticMethodID(env, g_main_cls, "multiple", "(DD)D");
-    if (g_multiple_mid == NULL) return 1;
+    // 2. Load Kotlin class (MainKt.class)
+    jclass local_kotlin = (*env)->FindClass(env, "KotlinMain");
+    if (local_kotlin == NULL) {
+        fprintf(stderr, "Failed to find Kotlin class 'KotlinMain'\n");
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        return 1;
+    }
+    g_kotlin_cls = (*env)->NewGlobalRef(env, local_kotlin);
+    (*env)->DeleteLocalRef(env, local_kotlin);
+    
+    g_kotlin_mid = (*env)->GetStaticMethodID(env, g_kotlin_cls, "sin", "(D)D");
+    if (g_kotlin_mid == NULL) {
+        fprintf(stderr, "Failed to find method 'sin' in MainKt\n");
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        return 1;
+    }
 
     return 0;
 }
-
 
 int init_jvm() {
   printf("Initializing JVM\n");
@@ -62,8 +90,8 @@ int init_jvm() {
     return 1;
   }
 
-  if (cache_java_methods(env) != 0) {
-    fprintf(stderr, "Warning: could not cache Java methods (classpath: %s)\n", classpath);
+  if (cache_all_methods(env) != 0) {
+    fprintf(stderr, "Warning: could not cache JVM methods (classpath: %s)\n", classpath);
   }
   return 0;
 }
