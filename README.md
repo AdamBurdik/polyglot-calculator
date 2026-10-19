@@ -2,6 +2,8 @@
 
 Using as many programming languages as we can to make a calculator!
 
+This project was made for hackaton, by our great team 1. 
+
 ## Language Map
 - [C](c)
 - [Python](python)
