@@ -1,6 +1,6 @@
 #pragma once
 #include "raylib.h"
-#define ROWS 5
+#define ROWS 6
 #define COLLUMBS 4
 struct button {
     const int width;

@@ -1,7 +1,7 @@
 import math
 
 def pi():
-  return pi.math
+  return math.pi
 
 def e():
-  return e.math
+  return math.e

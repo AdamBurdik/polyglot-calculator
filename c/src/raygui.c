@@ -96,7 +96,8 @@ static void press(const char *label) {
         return;
     }
     if (fresh) {
-        if ((label[0] >= '0' && label[0] <= '9') || strcmp(label, ".") == 0 || strcmp(label, "(") == 0) {
+        if ((label[0] >= '0' && label[0] <= '9') || strcmp(label, ".") == 0 || strcmp(label, "(") == 0 ||
+            strcmp(label, "pi") == 0 || strcmp(label, "e") == 0) {
             buffer[0] = '\0';
         } else if (last_ok && status[0] != '\0') {
             snprintf(buffer, sizeof(buffer), "%s", status);
@@ -107,6 +108,15 @@ static void press(const char *label) {
     }
     len = strlen(buffer);
     add = strlen(label);
+    if (strcmp(label, "pi") == 0 || strcmp(label, "e") == 0) {
+        if (len + add + 3 <= sizeof(buffer)) {
+            memcpy(buffer + len, label, add);
+            buffer[len + add] = '(';
+            buffer[len + add + 1] = ')';
+            buffer[len + add + 2] = '\0';
+        }
+        return;
+    }
     if (len + add + 1 <= sizeof(buffer)) {
         memcpy(buffer + len, label, add + 1);
     }
@@ -166,7 +176,7 @@ int raygui_main(void) {
     const int sH = 800;
     const int startY = 224;
     const int btnW = 150;
-    const int btnH = 115;
+    const int btnH = 96;
     Color btn = (Color){ 255, 255, 255, 255 };
     Color btnclick = (Color){ 74, 91, 214, 255 };
     Color btnhover = (Color){ 74, 91, 214, 255 };
@@ -193,7 +203,11 @@ int raygui_main(void) {
    	        { btnW,btnH,btn,"0",0,startY + (4 * btnH) },
    	        { btnW,btnH,btn,".",btnW,startY + (4 * btnH) },
    	        { btnW,btnH,btnclick,"=",2 * btnW,startY + (4 * btnH) },
-   	        { btnW,btnH,btn,"+",3 * btnW,startY + (4 * btnH) }
+   	        { btnW,btnH,btn,"+",3 * btnW,startY + (4 * btnH) },
+   	        { btnW,btnH,btn,"pi",0,startY + (5 * btnH) },
+   	        { btnW,btnH,btn,"e",btnW,startY + (5 * btnH) },
+   	        { btnW,btnH,btn,"^",2 * btnW,startY + (5 * btnH) },
+   	        { btnW,btnH,btn,"%",3 * btnW,startY + (5 * btnH) }
         },
         {
         	{ btnW,btnH,btn,"^",0,startY + (0 * btnH) },
@@ -215,7 +229,11 @@ int raygui_main(void) {
    	        { btnW,btnH,btn,"0",0,startY + (4 * btnH) },
    	        { btnW,btnH,btn,".",btnW,startY + (4 * btnH) },
    	        { btnW,btnH,btnclick,"=",2 * btnW,startY + (4 * btnH) },
-   	        { btnW,btnH,btn,"%",3 * btnW,startY + (4 * btnH) }
+   	        { btnW,btnH,btn,"%",3 * btnW,startY + (4 * btnH) },
+   	        { btnW,btnH,btn,"pi",0,startY + (5 * btnH) },
+   	        { btnW,btnH,btn,"e",btnW,startY + (5 * btnH) },
+   	        { btnW,btnH,btn,"(",2 * btnW,startY + (5 * btnH) },
+   	        { btnW,btnH,btn,")",3 * btnW,startY + (5 * btnH) }
         }
     };
     InitWindow(sW, sH, "Polyglot Calculator!"); // had to change the name lol

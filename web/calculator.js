@@ -55,6 +55,10 @@ document.querySelectorAll("button").forEach(function (btn) {
                     render();
                 });
             return;
+        } else if (label === "π") {
+            currentInput += "pi()";
+        } else if (label === "e") {
+            currentInput += "e()";
         } else {
             currentInput += label;
         }
