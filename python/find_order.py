@@ -23,6 +23,8 @@ def tokenize(source):
             continue
         if ch.isalpha() or ch == "_":
             match = NAME.match(source, i)
+            if match is None:
+                raise ValueError("unexpected character %r" % ch)
             tokens.append(("name", match.group(0)))
             i = match.end()
             continue

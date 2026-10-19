@@ -47,6 +47,7 @@ web:
 python:
 	mkdir -p dist/
 	cp python/find_order.py dist/
+	cp python/e_and_pi.py dist/
 lua:
 	mkdir -p dist/
 	cp lua/pow.lua dist/

@@ -1,7 +1,7 @@
 C gets Raylib frontend + http backend. (//neo: done)
 Assembly gets addition (//neo: done)
 D gets multiplication (done by amibeingwatched)
-C++ gets advanced calculations like matrices (using neoapps-dev/Uranium)
+C++ gets advanced calculations like matrices (using neoapps-dev/Uranium) (//neo: done)
 Python gets order of operations parsing (//neo: done)
 Lua gets exponents (powers) (//neo: done)
 Java (//adamix: done)

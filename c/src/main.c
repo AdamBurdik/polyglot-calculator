@@ -50,11 +50,15 @@ static size_t calc_op_count;
 static pthread_mutex_t calc_py_lock = PTHREAD_MUTEX_INITIALIZER;
 static PyObject *calc_py_find_order = NULL;
 static int calc_py_state = 0;
+static PyObject *calc_py_e = NULL;
+static PyObject *calc_py_pi = NULL;
 static pthread_mutex_t calc_lua_lock = PTHREAD_MUTEX_INITIALIZER;
 static lua_State *calc_lua = NULL;
 static int calc_lua_fn = LUA_NOREF;
 static int calc_lua_state = 0;
 static const char *calc_exe_dir(void);
+static void calc_py_error(char *err, size_t errlen);
+static int calc_python_init(char *err, size_t errlen);
 static void calc_fail(calc_ctx *ctx, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
@@ -137,7 +141,7 @@ jmethodID g_scala_mid = NULL;
 
 int calc_register(const char *name, int arity, calc_op_fn fn) {
   size_t i;
-  if (!name || !fn || arity < 1 || strlen(name) >= CALC_MAX_NAME) return -1;
+  if (!name || !fn || arity < 0 || strlen(name) >= CALC_MAX_NAME) return -1;
   for (i = 0; i < calc_op_count; i++) if (strcmp(calc_ops[i].name, name) == 0) return -1;
   if (calc_op_count >= CALC_MAX_OPS) return -1;
   snprintf(calc_ops[calc_op_count].name, CALC_MAX_NAME, "%s", name);
@@ -201,6 +205,12 @@ static int op_mul(calc_ctx *ctx, const double *args, size_t argc, double *out) {
 } */
 // D division.
 extern int op_div_d(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_det2(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_det3(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_tr2(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_tr3(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_frob2(calc_ctx *ctx, const double *args, size_t argc, double *out);
+extern int op_frob3(calc_ctx *ctx, const double *args, size_t argc, double *out);
 static int op_div(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   int status = op_div_d(ctx, args, argc, out);
   if (status != 0) {
@@ -311,6 +321,60 @@ static int op_tan(calc_ctx *ctx, const double *args, size_t argc, double *out) {
   return 0;
 }
 
+static int op_constant(const char *name, calc_ctx *ctx, double *out) {
+  char err[CALC_ERR];
+  PyGILState_STATE gil;
+  PyObject *fn = NULL, *result = NULL;
+  double value;
+  err[0] = '\0';
+  pthread_mutex_lock(&calc_py_lock);
+  if (calc_python_init(err, sizeof(err)) != 0) {
+    pthread_mutex_unlock(&calc_py_lock);
+    calc_fail(ctx, "%s", err[0] ? err : "python unavailable");
+    return -1;
+  }
+  fn = strcmp(name, "e") == 0 ? calc_py_e : calc_py_pi;
+  if (!fn) {
+    pthread_mutex_unlock(&calc_py_lock);
+    calc_fail(ctx, "e_and_pi.py does not define %s()", name);
+    return -1;
+  }
+  gil = PyGILState_Ensure();
+  result = PyObject_CallFunctionObjArgs(fn, NULL);
+  if (!result) {
+    calc_py_error(err, sizeof(err));
+    PyGILState_Release(gil);
+    pthread_mutex_unlock(&calc_py_lock);
+    calc_fail(ctx, "%s", err[0] ? err : "e_and_pi.py failed");
+    return -1;
+  }
+  value = PyFloat_AsDouble(result);
+  Py_DECREF(result);
+  if (value == -1.0 && PyErr_Occurred()) {
+    calc_py_error(err, sizeof(err));
+    PyGILState_Release(gil);
+    pthread_mutex_unlock(&calc_py_lock);
+    calc_fail(ctx, "%s", err[0] ? err : "e_and_pi.py did not return a number");
+    return -1;
+  }
+  PyGILState_Release(gil);
+  pthread_mutex_unlock(&calc_py_lock);
+  *out = value;
+  return 0;
+}
+
+static int op_e(calc_ctx *ctx, const double *args, size_t argc, double *out) {
+  (void) args;
+  (void) argc;
+  return op_constant("e", ctx, out);
+}
+
+static int op_pi(calc_ctx *ctx, const double *args, size_t argc, double *out) {
+  (void) args;
+  (void) argc;
+  return op_constant("pi", ctx, out);
+}
+
 static void calc_init(void) { //neo: maps each python-outptted operation to C functions
   calc_register("add", 2, op_add); //neo: calc_register("op_name", op_arity_or_number_of_numbers, C_function)
   calc_register("sub", 2, op_sub);
@@ -322,6 +386,16 @@ static void calc_init(void) { //neo: maps each python-outptted operation to C fu
   calc_register("sin", 1, op_sin);
   calc_register("cos", 1, op_cos);
   calc_register("tan", 1, op_tan);
+  calc_register("e", 0, op_e);
+  calc_register("pi", 0, op_pi);
+  //neo: matrix operations :yum:
+  calc_register("det2", 4, op_det2);
+  calc_register("det3", 9, op_det3);
+  calc_register("tr2", 4, op_tr2);
+  calc_register("tr3", 9, op_tr3);
+  calc_register("frob2", 4, op_frob2);
+  calc_register("frob3", 9, op_frob3);
+  //---
 }
 
 static const char *calc_exe_dir(void) {
@@ -419,6 +493,30 @@ static int calc_python_init(char *err, size_t errlen) {
   Py_DECREF(module);
   if (!calc_py_find_order || !PyCallable_Check(calc_py_find_order)) {
     snprintf(err, errlen, "find_order.py does not define find_order()");
+    Py_XDECREF(calc_py_find_order);
+    calc_py_find_order = NULL;
+    PyEval_SaveThread();
+    calc_py_state = -1;
+    return -1;
+  }
+  module = PyImport_ImportModule("e_and_pi");
+  if (!module) {
+    calc_py_error(err, errlen);
+    Py_XDECREF(calc_py_find_order);
+    calc_py_find_order = NULL;
+    PyEval_SaveThread();
+    calc_py_state = -1;
+    return -1;
+  }
+  calc_py_e = PyObject_GetAttrString(module, "e");
+  calc_py_pi = PyObject_GetAttrString(module, "pi");
+  Py_DECREF(module);
+  if (!calc_py_e || !calc_py_pi || !PyCallable_Check(calc_py_e) || !PyCallable_Check(calc_py_pi)) {
+    snprintf(err, errlen, "e_and_pi.py does not define e() and pi()");
+    Py_XDECREF(calc_py_e);
+    calc_py_e = NULL;
+    Py_XDECREF(calc_py_pi);
+    calc_py_pi = NULL;
     Py_XDECREF(calc_py_find_order);
     calc_py_find_order = NULL;
     PyEval_SaveThread();
@@ -586,6 +684,10 @@ static int plan_eval(const struct calc_plan *plan, calc_ctx *ctx, double *out) {
       calc_fail(ctx, "no C function registered for '%s'", inst->name);
       return -1;
     }
+    if (op->arity == 0 && sp >= CALC_MAX_STACK) {
+      calc_fail(ctx, "expression is too deep");
+      return -1;
+    }
     if ((size_t) op->arity > sp) {
       calc_fail(ctx, "'%s' needs %d values", inst->name, op->arity);
       return -1;
@@ -594,7 +696,8 @@ static int plan_eval(const struct calc_plan *plan, calc_ctx *ctx, double *out) {
       if (ctx->err[0] == '\0') calc_fail(ctx, "'%s' failed", inst->name);
       return -1;
     }
-    sp -= (size_t) op->arity - 1;
+    if (op->arity == 0) sp += 1;
+    else sp -= (size_t) op->arity - 1;
   }
   if (sp != 1) {
     calc_fail(ctx, "expression left %zu values", sp);

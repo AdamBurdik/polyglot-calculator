@@ -34,9 +34,9 @@ body{
     background-color: var(--bgcolor);
     margin: 10% auto;
     width:80%;
-    max-width:450px;
+    max-width:550px;
     height:auto;
-    max-height:600px;
+    max-height:720px;
     
 }
 
@@ -51,6 +51,7 @@ body{
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    overflow-wrap:anywhere;
 }
 
 
@@ -65,7 +66,7 @@ button{
     max-width:200px;
     height:100%;
     min-height:90px;
-    max-height:calc(600px / 5);
+    max-height:calc(600px / 6);
     cursor:pointer;
     transition:all 0.35s;
     background-color: var(--bgcolor);
@@ -88,8 +89,8 @@ button:hover{
 .buttons{
     width:100%;
     display:grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(6, 1fr);
     gap:5px;
     margin:5px 0;
     height:auto;
@@ -109,6 +110,10 @@ button:hover{
 }
 .bi-moon:hover{
     transform:scale(1.1);
+}
+.hide{
+    font-size:0rem;
+    color:transparent;
 }
 
 
