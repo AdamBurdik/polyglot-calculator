@@ -20,8 +20,8 @@ This project was made for hackaton, by our great team 1.
 ## Frontends
 | Type | Languages | Screenshot | Extra Info |
 |---|---|---|---|
-| GUI | C | [TBF] | Made with Raylib |
-| Web | HTML/CSS/JS | [TBF] | Access on port :8080 after launching the Raylib GUI |
+| GUI | C | <img width="632" height="856" alt="image" src="https://github.com/user-attachments/assets/0741f6a0-3033-4d31-931a-8e709f6a605c" /> | Made with Raylib |
+| Web | HTML/CSS/JS | <img width="1664" height="1028" alt="image" src="https://github.com/user-attachments/assets/ca567f9b-3198-4045-8be7-513eae93f8e2" /> | Access on port :8080 after launching the Raylib GUI |
 
 ## License
 You may use this code as you please, under the [0BSD License](LICENSE).
