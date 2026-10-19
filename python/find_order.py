@@ -76,10 +76,17 @@ class Parser:
             self.term()
             self.emit_op(op)
 
+    def starts_value(self):
+        kind, value = self.peek()
+        return kind in ("num", "name") or (kind, value) == ("op", "(")
+
     def term(self):
         self.unary()
-        while self.peek() in (("op", "*"), ("op", "/")):
-            op = OPS[self.eat("op")]
+        while self.peek() in (("op", "*"), ("op", "/")) or self.starts_value():
+            if self.peek() in (("op", "*"), ("op", "/")):
+                op = OPS[self.eat("op")]
+            else:
+                op = "mul"
             self.unary()
             self.emit_op(op)
 
@@ -108,13 +115,14 @@ class Parser:
             self.emit_num(value)
         elif kind == "name":
             name = self.eat("name")
-            self.eat("op", "(")
-            if self.peek() != ("op", ")"):
-                self.expr()
-                while self.peek() == ("op", ","):
-                    self.eat("op")
+            if self.peek() == ("op", "("):
+                self.eat("op")
+                if self.peek() != ("op", ")"):
                     self.expr()
-            self.eat("op", ")")
+                    while self.peek() == ("op", ","):
+                        self.eat("op")
+                        self.expr()
+                self.eat("op", ")")
             self.out.append("o " + name)
         elif (kind, value) == ("op", "("):
             self.eat("op")

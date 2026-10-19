@@ -324,8 +324,8 @@ static int op_tan(calc_ctx *ctx, const double *args, size_t argc, double *out) {
 static int op_constant(const char *name, calc_ctx *ctx, double *out) {
   char err[CALC_ERR];
   PyGILState_STATE gil;
-  PyObject *fn = NULL, *result = NULL;
-  double value;
+  PyObject *value = NULL;
+  double result;
   err[0] = '\0';
   pthread_mutex_lock(&calc_py_lock);
   if (calc_python_init(err, sizeof(err)) != 0) {
@@ -333,33 +333,24 @@ static int op_constant(const char *name, calc_ctx *ctx, double *out) {
     calc_fail(ctx, "%s", err[0] ? err : "python unavailable");
     return -1;
   }
-  fn = strcmp(name, "e") == 0 ? calc_py_e : calc_py_pi;
-  if (!fn) {
+  value = strcmp(name, "e") == 0 ? calc_py_e : calc_py_pi;
+  if (!value) {
     pthread_mutex_unlock(&calc_py_lock);
-    calc_fail(ctx, "e_and_pi.py does not define %s()", name);
+    calc_fail(ctx, "e_and_pi.py does not define %s", name);
     return -1;
   }
   gil = PyGILState_Ensure();
-  result = PyObject_CallFunctionObjArgs(fn, NULL);
-  if (!result) {
+  result = PyFloat_AsDouble(value);
+  if (result == -1.0 && PyErr_Occurred()) {
     calc_py_error(err, sizeof(err));
     PyGILState_Release(gil);
     pthread_mutex_unlock(&calc_py_lock);
-    calc_fail(ctx, "%s", err[0] ? err : "e_and_pi.py failed");
-    return -1;
-  }
-  value = PyFloat_AsDouble(result);
-  Py_DECREF(result);
-  if (value == -1.0 && PyErr_Occurred()) {
-    calc_py_error(err, sizeof(err));
-    PyGILState_Release(gil);
-    pthread_mutex_unlock(&calc_py_lock);
-    calc_fail(ctx, "%s", err[0] ? err : "e_and_pi.py did not return a number");
+    calc_fail(ctx, "%s", err[0] ? err : "e_and_pi.py did not define a number");
     return -1;
   }
   PyGILState_Release(gil);
   pthread_mutex_unlock(&calc_py_lock);
-  *out = value;
+  *out = result;
   return 0;
 }
 
@@ -511,8 +502,8 @@ static int calc_python_init(char *err, size_t errlen) {
   calc_py_e = PyObject_GetAttrString(module, "e");
   calc_py_pi = PyObject_GetAttrString(module, "pi");
   Py_DECREF(module);
-  if (!calc_py_e || !calc_py_pi || !PyCallable_Check(calc_py_e) || !PyCallable_Check(calc_py_pi)) {
-    snprintf(err, errlen, "e_and_pi.py does not define e() and pi()");
+  if (!calc_py_e || !calc_py_pi) {
+    snprintf(err, errlen, "e_and_pi.py does not define e and pi");
     Py_XDECREF(calc_py_e);
     calc_py_e = NULL;
     Py_XDECREF(calc_py_pi);
